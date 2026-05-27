@@ -2,6 +2,15 @@ spring:
   profiles:
     active: dev
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+
 ---
 spring:
   config:
@@ -33,13 +42,6 @@ spring:
 
 server:
   port: 8080
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    try-it-out-enabled: true
 
 app:
   jwt:
