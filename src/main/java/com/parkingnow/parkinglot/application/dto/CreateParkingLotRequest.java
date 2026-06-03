@@ -14,4 +14,6 @@ public class CreateParkingLotRequest {
     private BigDecimal hourlyRate;
     private String lotType;
     private Long ownerId;
+    private Double latitude;
+    private Double longitude;
 }

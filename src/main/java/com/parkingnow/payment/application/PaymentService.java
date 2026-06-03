@@ -4,14 +4,19 @@ import com.parkingnow.payment.application.dto.PaymentRequest;
 import com.parkingnow.payment.application.dto.PaymentResponse;
 import com.parkingnow.payment.domain.Payment;
 import com.parkingnow.payment.infrastructure.PaymentRepository;
+import com.parkingnow.parkinglot.domain.ParkingLot;
+import com.parkingnow.parkinglot.infrastructure.ParkingLotRepository;
 import com.parkingnow.reservation.domain.Reservation;
 import com.parkingnow.reservation.infrastructure.ReservationRepository;
+import com.parkingnow.shared.exception.ConflictException;
 import com.parkingnow.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -21,45 +26,76 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepo;
     private final ReservationRepository reservationRepo;
+    private final ParkingLotRepository lotRepo;
 
     @Transactional
-    public PaymentResponse demo(PaymentRequest req) {
+    public PaymentResponse create(PaymentRequest req, Long driverId) {
         Reservation reservation = reservationRepo.findById(req.getReservationId())
                 .orElseThrow(() -> new NotFoundException("Reservation not found: " + req.getReservationId()));
 
+        if (paymentRepo.findByReservationId(req.getReservationId()).isPresent()) {
+            throw new ConflictException("Reservation already paid");
+        }
+
+        BigDecimal amount = req.getAmount() != null
+                ? req.getAmount()
+                : calculateAmount(reservation);
+
         Payment payment = Payment.builder()
                 .reservationId(req.getReservationId())
-                .amount(req.getAmount() != null ? req.getAmount() : BigDecimal.valueOf(8.50))
-                .method(parseMethod(req.getMethod()))
+                .driverId(driverId)
+                .amount(amount)
+                .method(Payment.PaymentMethod.DEMO_CARD)
                 .status(Payment.PaymentStatus.PAID)
                 .paidAt(Instant.now())
                 .build();
-        payment = paymentRepo.save(payment);
-
-        reservation.setStatus(Reservation.ReservationStatus.ACTIVE);
-        reservationRepo.save(reservation);
-
-        return PaymentResponse.from(payment);
+        return PaymentResponse.from(paymentRepo.save(payment));
     }
 
-    public PaymentResponse findByReservation(Long reservationId) {
-        return paymentRepo.findByReservationId(reservationId)
-                .map(PaymentResponse::from)
-                .orElseThrow(() -> new NotFoundException("Payment not found for reservation: " + reservationId));
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> findByDriver(Long driverId) {
+        return paymentRepo.findByDriverIdOrderByCreatedAtDesc(driverId)
+                .stream().map(PaymentResponse::from).toList();
     }
 
-    public List<PaymentResponse> findAll() {
-        return paymentRepo.findAllByOrderByCreatedAtDesc().stream()
-                .map(PaymentResponse::from)
-                .toList();
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> findByLot(Long lotId) {
+        return paymentRepo.findByLotId(lotId)
+                .stream().map(PaymentResponse::from).toList();
     }
 
-    private Payment.PaymentMethod parseMethod(String method) {
-        if (method == null) return Payment.PaymentMethod.DEMO_CARD;
-        try {
-            return Payment.PaymentMethod.valueOf(method.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return Payment.PaymentMethod.DEMO_CARD;
+    @Transactional(readOnly = true)
+    public BigDecimal sumPaidToday() {
+        Instant startOfDay = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS);
+        return paymentRepo.sumPaidSince(startOfDay);
+    }
+
+    @Transactional(readOnly = true)
+    public int countPaidToday() {
+        Instant startOfDay = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS);
+        return paymentRepo.countPaidSince(startOfDay);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Object[]> last7DaysRevenue() {
+        Instant since = Instant.now().minus(7, java.time.temporal.ChronoUnit.DAYS)
+                .truncatedTo(java.time.temporal.ChronoUnit.DAYS);
+        return paymentRepo.sumByDay(since);
+    }
+
+    private BigDecimal calculateAmount(Reservation reservation) {
+        Long lotId = reservation.getLotId();
+        if (lotId == null) return BigDecimal.valueOf(3.00);
+        ParkingLot lot = lotRepo.findById(lotId).orElse(null);
+        if (lot == null) return BigDecimal.valueOf(3.00);
+
+        long minutes = 60;
+        if (reservation.getCreatedAt() != null && reservation.getExpiresAt() != null) {
+            minutes = Math.max(1, Duration.between(reservation.getCreatedAt(), reservation.getExpiresAt()).toMinutes());
         }
+
+        return lot.getHourlyRate()
+                .multiply(BigDecimal.valueOf(minutes))
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
     }
 }

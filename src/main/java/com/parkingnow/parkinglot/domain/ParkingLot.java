@@ -27,23 +27,20 @@ public class ParkingLot {
     private int capacity;
 
     @Builder.Default
-    private BigDecimal hourlyRate = BigDecimal.valueOf(3.50);
-
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private LotStatus status = LotStatus.AVAILABLE;
+    private BigDecimal hourlyRate = BigDecimal.valueOf(3.00);
 
     @Builder.Default
     private String lotType = "open";
 
     private Long ownerId;
 
-    @Builder.Default
-    private double rating = 4.5;
+    private Double latitude;
+
+    private Double longitude;
+
+    private String nodeId;
 
     @Column(updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
-
-    public enum LotStatus { AVAILABLE, OCCUPIED, MAINTENANCE }
 }

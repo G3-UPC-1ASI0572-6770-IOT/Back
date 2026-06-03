@@ -14,29 +14,37 @@ public class ParkingLotResponse {
     private String address;
     private String city;
     private int capacity;
-    private int occupied;
+    private int totalSpaces;
+    private int freeSpaces;
+    private int occupiedSpaces;
     private BigDecimal hourlyRate;
-    private String status;
     private String lotType;
     private Long ownerId;
-    private int iotNodes;
-    private double rating;
+    private Double latitude;
+    private Double longitude;
+    private String nodeId;
+    private boolean nodeOnline;
     private Instant createdAt;
 
-    public static ParkingLotResponse from(ParkingLot lot, int occupied, int iotNodes) {
+    public static ParkingLotResponse from(ParkingLot lot, int occupied, boolean nodeOnline) {
+        int total = lot.getCapacity();
+        int free = Math.max(0, total - occupied);
         return ParkingLotResponse.builder()
                 .id(lot.getId())
                 .name(lot.getName())
                 .address(lot.getAddress())
                 .city(lot.getCity())
-                .capacity(lot.getCapacity())
-                .occupied(occupied)
+                .capacity(total)
+                .totalSpaces(total)
+                .freeSpaces(free)
+                .occupiedSpaces(occupied)
                 .hourlyRate(lot.getHourlyRate())
-                .status(lot.getStatus().name().toLowerCase())
                 .lotType(lot.getLotType())
                 .ownerId(lot.getOwnerId())
-                .iotNodes(iotNodes)
-                .rating(lot.getRating())
+                .latitude(lot.getLatitude())
+                .longitude(lot.getLongitude())
+                .nodeId(lot.getNodeId())
+                .nodeOnline(nodeOnline)
                 .createdAt(lot.getCreatedAt())
                 .build();
     }

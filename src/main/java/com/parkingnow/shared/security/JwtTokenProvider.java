@@ -1,8 +1,8 @@
 package com.parkingnow.shared.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,37 +20,40 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
 
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    private SecretKey cachedKey;
+
+    @PostConstruct
+    public void init() {
+        cachedKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     public String generateToken(Authentication auth) {
         UserDetails user = (UserDetails) auth.getPrincipal();
-        return Jwts.builder()
-                .subject(user.getUsername())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(key())
-                .compact();
+        return build(user.getUsername());
     }
 
     public String generateTokenFromEmail(String email) {
+        return build(email);
+    }
+
+    private String build(String subject) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
-                .subject(email)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(key())
+                .subject(subject)
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + jwtExpirationMs))
+                .signWith(cachedKey)
                 .compact();
     }
 
     public String getEmailFromToken(String token) {
-        return Jwts.parser().verifyWith(key()).build()
+        return Jwts.parser().verifyWith(cachedKey).build()
                 .parseSignedClaims(token).getPayload().getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().verifyWith(key()).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith(cachedKey).build().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

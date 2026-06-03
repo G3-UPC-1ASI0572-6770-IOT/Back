@@ -7,7 +7,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Table(name = "payments")
+@Table(name = "payments", indexes = {
+    @Index(name = "idx_pay_reservation_id", columnList = "reservation_id"),
+    @Index(name = "idx_pay_status",         columnList = "status"),
+    @Index(name = "idx_pay_paid_at",        columnList = "paid_at"),
+    @Index(name = "idx_pay_status_paid_at", columnList = "status, paid_at")
+})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Payment {
 
@@ -15,8 +20,11 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "reservation_id", nullable = false)
     private Long reservationId;
+
+    @Column(name = "driver_id")
+    private Long driverId;
 
     @Column(nullable = false)
     private BigDecimal amount;
@@ -34,9 +42,10 @@ public class Payment {
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
+    @Column(name = "paid_at")
     private Instant paidAt;
 
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
 

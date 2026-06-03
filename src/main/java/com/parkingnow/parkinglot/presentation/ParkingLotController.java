@@ -8,6 +8,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/parking-lots")
@@ -36,9 +37,10 @@ public class ParkingLotController {
         return service.update(id, req);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/{id}/link-node")
+    public ResponseEntity<Map<String, String>> linkNode(
+            @PathVariable Long id,
+            @Valid @RequestBody LinkNodeRequest req) {
+        return ResponseEntity.ok(service.linkNode(id, req));
     }
 }

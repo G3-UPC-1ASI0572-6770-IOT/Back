@@ -9,28 +9,32 @@ import java.time.Instant;
 @Data @Builder
 public class ReservationResponse {
     private Long id;
-    private String code;
-    private String driverName;
-    private String driverPhone;
     private Long spaceId;
+    private String spaceLabel;
     private Long lotId;
-    private String startTime;
-    private String endTime;
+    private String parkingLotName;
+    private Long driverId;
+    private String driverEmail;
     private String status;
     private Instant createdAt;
+    private Instant expiresAt;
+    private Instant consumedAt;
+    private Instant cancelledAt;
 
     public static ReservationResponse from(Reservation r) {
         return ReservationResponse.builder()
                 .id(r.getId())
-                .code(r.getCode())
-                .driverName(r.getDriverName())
-                .driverPhone(r.getDriverPhone())
                 .spaceId(r.getSpaceId())
+                .spaceLabel(r.getSpaceLabel())
                 .lotId(r.getLotId())
-                .startTime(r.getStartTime() != null ? r.getStartTime().toString() : null)
-                .endTime(r.getEndTime() != null ? r.getEndTime().toString() : null)
-                .status(r.getStatus().name().toLowerCase())
+                .parkingLotName(r.getParkingLotName())
+                .driverId(r.getDriverId())
+                .driverEmail(r.getDriverEmail())
+                .status(r.getStatus().name())
                 .createdAt(r.getCreatedAt())
+                .expiresAt(r.getExpiresAt())
+                .consumedAt(r.getConsumedAt())
+                .cancelledAt(r.getCancelledAt())
                 .build();
     }
 }

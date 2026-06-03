@@ -19,6 +19,11 @@ public class CameraFeedService {
     private final CameraFeedRepository repo;
 
     @Transactional
+    public CameraFeedResponse saveSnapshot(CameraFeedRequest req) {
+        return register(req);
+    }
+
+    @Transactional
     public CameraFeedResponse register(CameraFeedRequest req) {
         CameraFeed feed = CameraFeed.builder()
                 .parkingLotId(req.getParkingLotId())
@@ -30,12 +35,14 @@ public class CameraFeedService {
         return CameraFeedResponse.from(repo.save(feed));
     }
 
+    @Transactional(readOnly = true)
     public List<CameraFeedResponse> findByLot(Long parkingLotId) {
         return repo.findByParkingLotId(parkingLotId).stream()
                 .map(CameraFeedResponse::from)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public CameraFeedResponse findLatestByLot(Long parkingLotId) {
         return repo.findFirstByParkingLotIdOrderByLastSeenAtDesc(parkingLotId)
                 .map(CameraFeedResponse::from)
