@@ -15,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -31,26 +34,25 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/",
-                    "/health",
-                    "/api/v1/auth/sign-in",
-                    "/api/v1/auth/sign-up/**",
-                    "/api/v1/iot/events",
-                    "/api/v1/iot/heartbeat",
-                    "/api/v1/iot/nodes/**",
-                    "/api/v1/camera/snapshot/**",
-                    "/api/v1/spaces/parking-lot/**",
-                    "/h2-console/**",
-                    "/actuator/health",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/swagger-ui/index.html",
-                    "/v3/api-docs/**",
-                    "/webjars/**"
+                    antMatcher("/"),
+                    antMatcher("/health"),
+                    antMatcher("/actuator/health"),
+                    antMatcher("/h2-console/**"),
+                    antMatcher("/swagger-ui/**"),
+                    antMatcher("/swagger-ui.html"),
+                    antMatcher("/swagger-ui/index.html"),
+                    antMatcher("/v3/api-docs/**"),
+                    antMatcher("/webjars/**"),
+                    antMatcher("/api/v1/auth/sign-in"),
+                    antMatcher("/api/v1/auth/sign-up/**"),
+                    antMatcher("/api/v1/iot/events"),
+                    antMatcher("/api/v1/iot/heartbeat"),
+                    antMatcher("/api/v1/iot/nodes/**"),
+                    antMatcher("/api/v1/camera/snapshot/**"),
+                    antMatcher("/api/v1/spaces/parking-lot/**")
                 ).permitAll()
-                // Public read-only parking-lots endpoints
-                .requestMatchers(org.springframework.http.HttpMethod.GET,
-                    "/api/v1/parking-lots", "/api/v1/parking-lots/*").permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/v1/parking-lots", "GET"),
+                                 new AntPathRequestMatcher("/api/v1/parking-lots/*", "GET")).permitAll()
                 .anyRequest().authenticated()
             )
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))
