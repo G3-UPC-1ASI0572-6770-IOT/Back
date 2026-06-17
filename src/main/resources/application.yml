@@ -79,8 +79,8 @@ spring:
   datasource:
     url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
-    username: ${DATABASE_USER:}
-    password: ${DATABASE_PASSWORD:}
+    username: ${DATABASE_USER:#{null}}
+    password: ${DATABASE_PASSWORD:#{null}}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
