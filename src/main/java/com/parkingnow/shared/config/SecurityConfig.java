@@ -33,8 +33,6 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/v1/auth/sign-in",
                     "/api/v1/auth/sign-up/**",
-                    "/api/v1/parking-lots",
-                    "/api/v1/parking-lots/*",
                     "/api/v1/iot/events",
                     "/api/v1/iot/heartbeat",
                     "/api/v1/iot/nodes/**",
@@ -46,6 +44,9 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
+                // Public read-only parking-lots endpoints
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                    "/api/v1/parking-lots", "/api/v1/parking-lots/*").permitAll()
                 .anyRequest().authenticated()
             )
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))

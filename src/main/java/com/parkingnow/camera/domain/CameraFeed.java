@@ -19,7 +19,10 @@ public class CameraFeed {
 
     private String nodeId;
 
-    @Column(nullable = false)
+    // Holds either an external URL or a base64 data URI (data:image/jpeg;base64,...)
+    // from the ESP32-CAM snapshot, so it must be a large text column.
+    @Lob
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String cameraUrl;
 
     @Enumerated(EnumType.STRING)

@@ -54,8 +54,10 @@ public class IotEventController {
     }
 
     private void validateKey(String key) {
-        if (key != null && !iotKey.equals(key)) {
-            throw new org.springframework.security.access.AccessDeniedException("Invalid IoT key");
+        // These endpoints are permitAll in SecurityConfig, so the X-IoT-Key
+        // header is the only protection — require it and reject a missing key.
+        if (key == null || !iotKey.equals(key)) {
+            throw new org.springframework.security.access.AccessDeniedException("Invalid or missing IoT key");
         }
     }
 }
